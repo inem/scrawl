@@ -550,7 +550,22 @@ extension PermissionPanel {
   /// One card surface: a two-layer shadow, frosted Liquid Glass, and the content clipped to it.
   /// The flight and the docked panel use the same class so the hand-off is pixel for pixel.
   final class CardSurface: NSView {
-    let glass = NSGlassEffectView()
+    /// Liquid Glass on macOS 26+, the older behind-window blur before it.
+    let glass: NSView = {
+      if #available(macOS 26, *) {
+        let glass = NSGlassEffectView()
+        glass.style = .regular
+        return glass
+      }
+      let blur = NSVisualEffectView()
+      blur.material = .popover
+      blur.blendingMode = .behindWindow
+      blur.state = .active
+      blur.wantsLayer = true
+      blur.layer?.masksToBounds = true
+      blur.layer?.cornerCurve = .continuous
+      return blur
+    }()
     let clip = NSView()
     let frost = Frost()
     let content: NSView
@@ -572,7 +587,6 @@ extension PermissionPanel {
       contact.shadowRadius = 1.5
       contact.shadowOffset = CGSize(width: 0, height: -0.5)
       ambient.shadowOffset = CGSize(width: 0, height: -8)
-      glass.style = .regular
       addSubview(glass)
       clip.wantsLayer = true
       clip.layer?.masksToBounds = true
@@ -593,7 +607,11 @@ extension PermissionPanel {
     func apply(size: NSSize, radius: CGFloat, lift: CGFloat) {
       let bounds = NSRect(origin: .zero, size: size)
       glass.frame = bounds
-      glass.cornerRadius = radius
+      if #available(macOS 26, *), let glass = glass as? NSGlassEffectView {
+        glass.cornerRadius = radius
+      } else {
+        glass.layer?.cornerRadius = radius
+      }
       clip.frame = bounds
       clip.layer?.cornerRadius = radius
       frost.frame = bounds

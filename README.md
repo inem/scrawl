@@ -6,6 +6,12 @@ Press a shortcut (`⌥⇧S`) and Scrawl starts recording the screen. Talk, click
 
 ## Install
 
+> **This fork** ([inem/scrawl](https://github.com/inem/scrawl)) also runs on macOS 15. Build it
+> with Xcode 26 (the SDK; the app targets 15.0). On macOS 15 Apple's SpeechAnalyzer doesn't exist,
+> so transcription goes through [Hex](#apple-or-hex) by default; set `"hexLanguage": "ru"` (or any
+> language Hex's model knows) in `~/.config/scrawl/config.json` to stop it assuming English. The
+> permission card uses the pre-26 blur instead of Liquid Glass.
+
 Scrawl needs an Apple silicon Mac on macOS 26 or later. Download the DMG from
 [scrawl.kitlangton.com](https://scrawl.kitlangton.com), or use Homebrew:
 
@@ -702,7 +708,8 @@ Or in
 { "transcriber": "hex", "hexModel": "parakeet_v3" }
 ```
 
-`"transcriber"` is `"apple"` (default) or `"hex"`; `hexModel` defaults to the first ready one of
+`"transcriber"` is `"apple"` (default on macOS 26+; `"hex"` is the default on older macOS) or
+`"hex"`; `hexLanguage` (default `"en"`) is the language sent to Hex; `hexModel` defaults to the first ready one of
 `parakeet_unified_en`, `parakeet_v3`, `parakeet_v2`, `whisper_large_v3_turbo`. Scrawl never
 downloads or prepares a model: install it in Hex first.
 

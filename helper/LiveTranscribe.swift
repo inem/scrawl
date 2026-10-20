@@ -8,6 +8,7 @@ import Speech
 /// tail is finalized `{"done":true,"samples":N}`. Times are ms from the first sample, as
 /// `transcribe` gives them for the WAV. It never downloads a model: one that isn't installed
 /// fails at once, and Scrawl transcribes the finished recording instead.
+@available(macOS 26, *)
 enum LiveTranscriber {
   static func run() async throws {
     guard SpeechTranscriber.isAvailable else { throw HelperError("SpeechTranscriber isn't available on this Mac") }
@@ -61,6 +62,7 @@ enum LiveTranscriber {
 }
 
 /// Turns stdin into analyzer buffers, about 100 ms at a time.
+@available(macOS 26, *)
 private final class StdinPCM: @unchecked Sendable {
   let format: AVAudioFormat
   let converter: AVAudioConverter?

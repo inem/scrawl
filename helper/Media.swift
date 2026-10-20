@@ -5,6 +5,7 @@ import Speech
 /// The on-device model that transcribes: SpeechTranscriber where this Mac supports it, else
 /// DictationTranscriber (Macs, and virtual machines, without SpeechTranscriber), for the user's
 /// locale, the nearest supported one in the same language, or en-US.
+@available(macOS 26, *)
 struct SpeechChoice {
   let dictation: Bool
   let locale: Locale
@@ -22,6 +23,7 @@ struct SpeechChoice {
 /// bundle id (`dev.kitlangton.scrawl.helper`) and downloads the model if the Mac doesn't have it.
 /// A fresh Mac has none, so Scrawl installs it in the background at launch
 /// (`scrawl-helper speech-model --install`) rather than in the middle of a capture.
+@available(macOS 26, *)
 enum SpeechModel {
   static func choose() async -> SpeechChoice? {
     if SpeechTranscriber.isAvailable,
@@ -104,6 +106,7 @@ enum SpeechModel {
 /// On-device transcription with SpeechAnalyzer: finalized results only, each word with its own
 /// audio time range. Without a usable model the output says why in `missing` (`downloading`,
 /// `unsupported` or `failed`, with `error`) and has no text, rather than failing.
+@available(macOS 26, *)
 enum Transcriber {
   static func transcribe(_ url: URL) async throws -> [String: Any] {
     guard let choice = await SpeechModel.choose() else {

@@ -393,6 +393,9 @@ pub struct Config {
     /// `hex::PREFERRED_MODELS`).
     #[serde(default)]
     pub hex_model: Option<String>,
+    /// The language Hex transcribes in (`hexLanguage`, an ISO code such as `"ru"`; default `"en"`).
+    #[serde(default)]
+    pub hex_language: Option<String>,
     /// Whether to use the native Metal recording pill instead of GPUI's `HudPillWindow` (default `true`).
     #[serde(default)]
     pub native_pill: Option<bool>,
@@ -645,6 +648,14 @@ pub fn hex_model() -> Option<String> {
         .hex_model
         .map(|model| model.trim().to_owned())
         .filter(|model| !model.is_empty())
+}
+
+/// The configured Hex language (`hexLanguage`), if any.
+pub fn hex_language() -> Option<String> {
+    config()
+        .hex_language
+        .map(|language| language.trim().to_owned())
+        .filter(|language| !language.is_empty())
 }
 
 /// Whether the native AppKit + Metal recording pill is enabled (`SCRAWL_NATIVE_PILL` or

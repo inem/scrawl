@@ -1,6 +1,7 @@
 //! Transcription: Apple's SpeechAnalyzer through `scrawl-helper` (measured word and segment
 //! timings), or Hex when `"transcriber": "hex"` is set and Hex is connected (`crate::hex`; word
-//! times estimated). Any Hex trouble falls back to Apple for that recording.
+//! times estimated). Any Hex trouble falls back to Apple for that recording. SpeechAnalyzer is
+//! macOS 26+, so on older macOS an unconfigured engine means Hex.
 
 use std::path::Path;
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -33,12 +34,19 @@ impl Engine {
         }
     }
 
-    /// The configured engine: `"transcriber"` in the config file, Apple when missing or unknown.
+    /// The configured engine: `"transcriber"` in the config file; when missing or unknown, Apple
+    /// where this Mac has SpeechAnalyzer, else Hex.
     pub fn configured() -> Self {
         crate::handoff::transcriber()
             .as_deref()
             .and_then(Self::parse)
-            .unwrap_or_default()
+            .unwrap_or_else(|| {
+                if apple_speech_available() {
+                    Self::Apple
+                } else {
+                    Self::Hex
+                }
+            })
     }
 
     /// What recordings use now: a command-line `--transcriber`, else the configured engine.
@@ -49,6 +57,44 @@ impl Engine {
             _ => Self::configured(),
         }
     }
+}
+
+/// Whether Apple's on-device engine can run here: SpeechAnalyzer needs macOS 26 (Windows
+/// always has its local Parakeet).
+pub fn apple_speech_available() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        static MAJOR: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
+        *MAJOR.get_or_init(macos_major) >= 26
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        true
+    }
+}
+
+/// The running macOS major version from `kern.osproductversion`, 0 when unreadable.
+#[cfg(target_os = "macos")]
+fn macos_major() -> u32 {
+    let mut buffer = [0u8; 32];
+    let mut len = buffer.len();
+    // SAFETY: the name is NUL-terminated and `len` is the buffer's size.
+    let status = unsafe {
+        libc::sysctlbyname(
+            c"kern.osproductversion".as_ptr(),
+            buffer.as_mut_ptr().cast(),
+            &mut len,
+            std::ptr::null_mut(),
+            0,
+        )
+    };
+    if status != 0 {
+        return 0;
+    }
+    std::str::from_utf8(&buffer[..len.saturating_sub(1)])
+        .ok()
+        .and_then(|version| version.split('.').next()?.parse().ok())
+        .unwrap_or(0)
 }
 
 /// The on-device engine's name in menus: Apple's SpeechAnalyzer on macOS; on Windows, Parakeet

@@ -90,6 +90,13 @@ fn hex_status() {
         "Hex model setting: {}",
         configured.as_deref().unwrap_or("(automatic)")
     );
+    println!(
+        "Hex language: {}",
+        handoff::hex_language().as_deref().unwrap_or("en")
+    );
+    if !transcribe::apple_speech_available() {
+        println!("{}: needs macOS 26 (SpeechAnalyzer)", transcribe::LOCAL_ENGINE_TITLE);
+    }
     println!("Discovery file: {}", hex::discovery_path().display());
     let status = match hex::status() {
         Ok(status) => status,

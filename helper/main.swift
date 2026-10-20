@@ -118,12 +118,22 @@ case "mirror":
   )
 case "transcribe":
   guard arguments.count >= 2 else { fail("transcribe needs a file") }
-  runAsync { emit(try await Transcriber.transcribe(URL(filePath: arguments[1]))) }
+  if #available(macOS 26, *) {
+    runAsync { emit(try await Transcriber.transcribe(URL(filePath: arguments[1]))) }
+  } else {
+    // SpeechAnalyzer is macOS 26+; say so the way a missing model does, so Scrawl moves on.
+    emit(["locale": Locale.current.identifier, "text": "", "segments": [], "words": [], "missing": "unsupported"])
+  }
 case "transcribe-stream":
+  guard #available(macOS 26, *) else { fail("live transcription needs SpeechAnalyzer (macOS 26)") }
   runAsync { try await LiveTranscriber.run() }
 case "speech-model":
   let install = arguments.contains("--install")
-  runAsync { await SpeechModel.run(install: install) }
+  if #available(macOS 26, *) {
+    runAsync { await SpeechModel.run(install: install) }
+  } else {
+    emit(["status": "unsupported"])
+  }
 case "frames":
   guard arguments.count >= 2, let dir = option("--out-dir", in: arguments) else {
     fail("frames needs MOVIE --out-dir DIR (--every MS | --at MS,MS…)")

@@ -33,6 +33,18 @@ pub const PREFERRED_MODELS: [&str; 4] = [
 ];
 
 const LANGUAGE: &str = "en";
+
+/// `hexLanguage` from the config when it's a plain language tag, else `LANGUAGE`.
+fn language() -> String {
+    crate::handoff::hex_language()
+        .filter(|tag| {
+            tag.len() <= 16
+                && tag
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        })
+        .unwrap_or_else(|| LANGUAGE.to_owned())
+}
 const SAMPLE_RATE_KHZ: u64 = 16;
 const CONNECT_TIMEOUT: Duration = Duration::from_millis(300);
 const QUICK_READ_TIMEOUT: Duration = Duration::from_secs(2);
@@ -335,7 +347,7 @@ impl Client {
         let response = request(
             &self.endpoint,
             "POST",
-            &format!("/transcriptions?model={model}&language={LANGUAGE}"),
+            &format!("/transcriptions?model={model}&language={}", language()),
             wav,
             Timeouts {
                 read: TRANSCRIBE_READ_TIMEOUT,
